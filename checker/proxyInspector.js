@@ -33,9 +33,6 @@ async function getWithRetry(
 }
 
 export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
-    // 确保本机IP已初始化
-    await initLocalIp();
-
     let httpAgent;
     let httpsAgent;
 
