@@ -26,7 +26,12 @@ def main():
     with open("../data/raw.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=4, ensure_ascii=False)
 
-    print(f"共获取 {len(output)} 个代理节点，已保存至 data/raw.json")
+    # 使用 __repr__ 格式写入 raw.txt，每行一个代理节点
+    with open("../data/raw.txt", "w", encoding="utf-8") as f:
+        for result in all_results:
+            f.write(repr(result) + "\n")
+
+    print(f"共获取 {len(output)} 个代理节点，已保存至 data/raw.json 和 data/raw.txt")
 
 
 if __name__ == "__main__":
