@@ -232,8 +232,8 @@ class ProxyNode:
         return (self.ip, self.port, self.type) == (other.ip, other.port, other.type)
 
     def __repr__(self):
-        return json.dumps(self.all, ensure_ascii=False)
-        # return f"ProxyNode({self.ip}:{self.port} [{self.type}])"
+        # return json.dumps(self.all, ensure_ascii=False)
+        return f"{self.type}://{self.ip}:{self.port}"
 
 
 BLOCKED_URLS = [
@@ -457,7 +457,6 @@ def fetch_freeproxy_world(configs):
 def fetch_freeproxy_work_pagelist(config, pagelist):
     urls = []
     args = urllib.parse.urlencode(config)
-    pagelist.sort()
     for page in pagelist:
         urls.append(f"https://www.freeproxy.world/?{args}&page={page}")
     return _fetch_htmls(urls)
