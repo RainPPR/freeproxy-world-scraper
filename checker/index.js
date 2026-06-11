@@ -83,18 +83,6 @@ async function checkProxiesWithConcurrency(proxies, concurrency) {
                 results.push(result);
             } catch (error) {
                 console.error(`检测失败 ${buildProxyUrl(proxy)}:`, error.message);
-                results.push({
-                    proxyData: proxy,
-                    report: {
-                        proxy: buildProxyUrl(proxy),
-                        passAll: false,
-                        alive: false,
-                        latency: -1,
-                        tlsSecure: false,
-                        exitIpInfo: null,
-                        error: { step: 'worker', message: error.message }
-                    }
-                });
             } finally {
                 activeWorkers--;
             }
@@ -133,13 +121,12 @@ async function main() {
         // 原始字段
         ...proxyData,
         // check 字段（包含 alive, latency, tlsSecure）
-        check: {
+        check_report: {
             alive: report.alive,
-            latency: report.latency,
+            latency_cf: report.latencyCf,
+            latency_openssh: report.latencyOpenssh,
             tlsSecure: report.tlsSecure
-        },
-        // exit_ip_info
-        exit_ip_info: report.exitIpInfo
+        }
     }));
 
     // 写入 JSON 输出文件（所有节点）
