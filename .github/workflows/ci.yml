@@ -20,6 +20,8 @@ jobs:
   scraper:
     runs-on: ubuntu-latest
     if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip_scraper == 'true') }}
+    outputs:
+      new_sha: ${{ steps.save_sha.outputs.sha }}
     steps:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
@@ -61,6 +63,7 @@ jobs:
         # run: xvfb-run --server-args="-screen 0 1280x1024x24" uv run scraper\main.py
 
       - name: Commit Changes
+        id: save_sha
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -71,6 +74,8 @@ jobs:
             git commit -m "Update configs $(date '+%Y-%m-%d %H:%M:%S') [skip ci]"
             git push origin main
           fi
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
 
   checker:
     runs-on: ubuntu-latest
@@ -84,6 +89,9 @@ jobs:
       
       - name: Checkout Repository
         uses: actions/checkout@v6
+        with:
+          # 精准拉取 job1 刚刚生成并推上去的那个 commit
+          ref: ${{ needs.scraper.outputs.new_sha }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
