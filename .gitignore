@@ -314,3 +314,5 @@ pyrightconfig.json
 /scraper/downloaded_files
 /test
 scraper/data.json
+index-bin.exe
+index.js.map

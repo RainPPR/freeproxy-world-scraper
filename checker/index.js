@@ -2,8 +2,10 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 1000;
+const CONCURRENCY = 6000;
 const TIMEOUT_MS = 10000;
+const RAMP_UP_DURATION_MS = 20000;
+const RAMP_UP_RATE = 300;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
@@ -47,16 +49,42 @@ async function checkSingleProxy(proxyData) {
     return { proxyData, report };
 }
 
-// 并发控制检测
+// 并发控制检测 - 前60s均摊启动，之后填充空位
 async function checkProxiesWithConcurrency(proxies, concurrency) {
     const results = [];
     const queue = [...proxies];
-    let processed = 0;
     const total = proxies.length;
+    let processed = 0;
+    let activeWorkers = 0;
+    const startTime = Date.now();
+    let rampUpComplete = false;
 
     async function worker() {
         while (queue.length > 0) {
+            // 检查是否需要等待均摊期
+            if (!rampUpComplete) {
+                const elapsed = Date.now() - startTime;
+                const expectedWorkers = Math.min(
+                    concurrency,
+                    Math.floor((elapsed / 1000) * RAMP_UP_RATE)
+                );
+                
+                if (activeWorkers >= expectedWorkers && elapsed < RAMP_UP_DURATION_MS) {
+                    // 等待下一个时间片
+                    await new Promise(r => setTimeout(r, 100));
+                    continue;
+                }
+                
+                if (elapsed >= RAMP_UP_DURATION_MS) {
+                    rampUpComplete = true;
+                    console.log('均摊启动结束')
+                }
+            }
+
             const proxy = queue.shift();
+            if (!proxy) break;
+            
+            activeWorkers++;
             processed++;
             
             if (processed % 100 === 0 || processed === total) {
@@ -80,11 +108,13 @@ async function checkProxiesWithConcurrency(proxies, concurrency) {
                         error: { step: 'worker', message: error.message }
                     }
                 });
+            } finally {
+                activeWorkers--;
             }
         }
     }
 
-    // 启动多个 worker
+    // 启动所有 worker，但它们会自己控制启动节奏
     const workers = Array(concurrency).fill().map(() => worker());
     await Promise.all(workers);
 
