@@ -438,9 +438,9 @@ def _fetch_htmls(urls):
     url_queue.join()
 
     # 也可以选择 join 线程
-    for t in threads:
-        # 这里不需要 join，因为 queue.join() 已经保证任务做完了
-        pass
+    # for t in threads:
+    #     # 这里不需要 join，因为 queue.join() 已经保证任务做完了
+    #     pass
 
     print(f"\n[调度中心] 所有任务处理完毕。")
     return results
