@@ -188,7 +188,8 @@ def get_total_pages(soup):
             page_numbers.append(int(text))
 
     # 返回最大页码，若无有效页码则默认返回 1
-    return max(page_numbers) if page_numbers else 1
+    total_pages = max(page_numbers) if page_numbers else 1
+    return total_pages
 
 
 class ProxyNode:
@@ -294,7 +295,9 @@ def _fetch_pagemax(url):
         if check_anti_bot_status(bs4_data)["is_blocked"]:
             sb_fp.gui_click_captcha()
             bs4_data = sb_fp.get_beautiful_soup()
-        return get_total_pages(bs4_data)
+        total_pages = get_total_pages(bs4_data)
+        print(f"[Freeproxy CDP] 最大页码数 {url} 为 {total_pages}")
+        return total_pages
     except Exception as e:
         raise ValueError(f"[Freeproxy CDP] 获取最大页码失败: {e}")
     finally:
