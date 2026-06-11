@@ -2,7 +2,7 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 32;
+const CONCURRENCY = 128;
 const TIMEOUT_MS = 5000;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
