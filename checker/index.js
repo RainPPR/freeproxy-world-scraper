@@ -10,19 +10,6 @@ const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
 
-// IP 信息标志位对应的图标（为 true 时显示）
-const IP_FLAG_ICONS = {
-    is_bogon: '🚫',      // 无效地址
-    is_mobile: '📱',     // 移动网络
-    is_satellite: '🛰️',  // 卫星
-    is_crawler: '🕷️',    // 爬虫
-    is_datacenter: '🏢', // 数据中心
-    is_tor: '🧅',        // Tor
-    is_proxy: '🎭',      // 代理
-    is_vpn: '🔒',        // VPN
-    is_abuser: '⚠️'      // 滥用者
-};
-
 // 读取原始代理数据
 function loadProxies() {
     try {
@@ -166,50 +153,25 @@ async function main() {
     }
 
     // 构建通过的代理的 TXT 输出
-    // 格式: type://ip:port#(urlencoded)exit_ip_info.location.country_code (country state city) ip【图标】
+    // 格式: type://ip:port#encodeURIComponent[country_code TYPE (city, country) ip:port]
     try {
-        const txtContent = passedProxies.map(({ proxyData, report }) => {
+        const txtContent = passedProxies.map(({ proxyData }) => {
             const type = proxyData.type;
             const ip = proxyData.ip;
             const port = proxyData.port;
 
-            // 获取 exit_ip_info 或 fallback 到 proxyData
-            const exitIpInfo = report.exitIpInfo || {};
-            const location = exitIpInfo.location || {};
+            // 获取代理数据中的位置信息
+            const countryCode = proxyData.country_code || '';
+            const country = proxyData.country || '';
+            const city = proxyData.city || '';
 
-            // 获取位置信息（优先使用 exit_ip_info，如果没有则 fallback 到 proxyData）
-            const countryCode = location.country_code || proxyData.country_code || '';
-            const country = location.country || proxyData.country || '';
-            const state = location.state || '';  // state 如果不存在则留空
-            const city = location.city || proxyData.city || '';
-            const exitIp = exitIpInfo.ip || proxyData.ip || '';
+            // 构建 URL 编码的部分，格式与 ProxyNode.__repr__ 保持一致
+            // {country_code} {type.upper()} ({city}, {country}) {ip}:{port}
+            const name = encodeURIComponent(
+                `${countryCode} ${type.toUpperCase()} (${city}, ${country}) ${ip}:${port}`
+            );
 
-            // 构建位置字符串: country state city（空格分隔，state 可能为空）
-            const locationParts = [country, state, city].filter(p => p);
-            const locationStr = locationParts.join(' ');
-
-            // 构建需要 URL 编码的部分
-            const urlencodedPart = encodeURIComponent(`${countryCode} (${locationStr}) ${exitIp}`);
-
-            // 构建图标字符串（只显示为 true 的标志）
-            let icons = '';
-            if (exitIpInfo) {
-                if (exitIpInfo.is_bogon) icons += IP_FLAG_ICONS.is_bogon;
-                if (exitIpInfo.is_mobile) icons += IP_FLAG_ICONS.is_mobile;
-                if (exitIpInfo.is_satellite) icons += IP_FLAG_ICONS.is_satellite;
-                if (exitIpInfo.is_crawler) icons += IP_FLAG_ICONS.is_crawler;
-                if (exitIpInfo.is_datacenter) icons += IP_FLAG_ICONS.is_datacenter;
-                if (exitIpInfo.is_tor) icons += IP_FLAG_ICONS.is_tor;
-                if (exitIpInfo.is_proxy) icons += IP_FLAG_ICONS.is_proxy;
-                if (exitIpInfo.is_vpn) icons += IP_FLAG_ICONS.is_vpn;
-                if (exitIpInfo.is_abuser) icons += IP_FLAG_ICONS.is_abuser;
-            }
-
-            if (icons && icons.trim() !== '') {
-                icons = `【${icons}】`;
-            }
-
-            return `${type}://${ip}:${port}#${urlencodedPart}${icons}`;
+            return `${type}://${ip}:${port}#${name}`;
         }).join('\n');
 
         writeFileSync(OUTPUT_TXT_PATH, txtContent, 'utf-8');
