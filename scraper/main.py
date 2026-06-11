@@ -2,7 +2,7 @@ import json
 
 import yaml
 
-from freeproxy_world_scraper import fetch_freeproxy_world_pagerandom
+from freeproxy-world-scraper import fetch_freeproxy_work_pagerandom
 
 
 def main():
