@@ -3,8 +3,29 @@ import urllib.parse
 import re
 import json
 from bs4 import BeautifulSoup
-
+import time
 import random
+
+import builtins
+
+import threading
+import queue
+from concurrent.futures import ThreadPoolExecutor
+from seleniumbase import sb_cdp
+
+_PRINT_LOCK = threading.Lock()
+# 2. 保存原始的 print 函数，防止无限递归
+_original_print = builtins.print
+
+
+def _thread_safe_print(*args, **kwargs):
+    """自定义的线程安全打印函数"""
+    with _PRINT_LOCK:
+        _original_print(*args, **kwargs)
+
+
+# 3. 全局替换内置的 print
+builtins.print = _thread_safe_print
 
 
 def check_anti_bot_status(soup):
@@ -281,8 +302,6 @@ CHROME_ARGS = {
     "chromium_args": ",".join(CHROMIUM_ARGS),
 }
 
-from seleniumbase import sb_cdp
-
 
 def _fetch_pagemax(url):
     sb_fp = sb_cdp.Chrome(url=url, **CHROME_ARGS)
@@ -305,32 +324,126 @@ def _fetch_pagemax(url):
         sb_fp.driver.stop()
 
 
-def _fetch_htmls(urls):
-    results = set()
-    sb = sb_cdp.Chrome(**CHROME_ARGS)
-    # sb.driver.execute_cdp_cmd("Network.enable", {})
-    # sb.driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": BLOCKED_URLS})
-    try:
-        for url in urls:
-            print(f"[Freeproxy CDP] 开始获取: {url}")
-            sb.open(url)
+CAPTCHA_LOCK = threading.Lock()  # 保护鼠标点击
+RESULTS_LOCK = threading.Lock()  # 保护结果集
+
+
+def _worker_process(url_queue, results):
+    """
+    单个 worker 线程
+    """
+    sb = None
+    thread_id = threading.get_ident()
+
+    while True:
+        try:
+            # 1. 获取任务
+            url = url_queue.get_nowait()
+        except queue.Empty:
+            break
+
+        # 2. 确保当前线程有可用的浏览器实例
+        if sb is None:
             try:
+                print(f"[Worker {thread_id}] 正在初始化浏览器...")
+                sb = sb_cdp.Chrome(**CHROME_ARGS)
+            except Exception as e:
+                print(f"[Worker {thread_id}] 浏览器启动失败: {e}")
+                url_queue.task_done()
+                continue
+
+        # --- [关键步骤] 设置 10 秒强制超时计时器 ---
+        # 如果 10 秒内没执行完，执行 sb.driver.stop() 强制关掉驱动，阻塞的操作会立即崩掉并抛出异常
+        timer = threading.Timer(
+            10.0, lambda: sb.driver.stop() if sb and sb.driver else None
+        )
+        timer.start()
+
+        task_start_time = time.time()
+        try:
+            print(f"[Worker {thread_id}] 正在处理 (限时10s): {url}")
+
+            # 执行具体抓取逻辑
+            sb.open(url)
+            sb.assert_element("table tr", timeout=5)
+            bs4_data = sb.get_beautiful_soup()
+
+            if check_anti_bot_status(bs4_data)["is_blocked"]:
+                print(f"[Worker {thread_id}] 检测到验证码，等待鼠标锁...")
+                with CAPTCHA_LOCK:
+                    print(f"[Worker {thread_id}] 正在点击验证码...")
+                    sb.gui_click_captcha()
+
                 sb.assert_element("table tr", timeout=5)
                 bs4_data = sb.get_beautiful_soup()
-                if check_anti_bot_status(bs4_data)["is_blocked"]:
-                    sb.gui_click_captcha()
-                    sb.assert_element("table tr", timeout=5)
-                    bs4_data = sb.get_beautiful_soup()
-                proxies = extract_proxies(bs4_data)
+
+            proxies = extract_proxies(bs4_data)
+
+            with RESULTS_LOCK:
                 for proxy in proxies:
                     results.add(ProxyNode(proxy))
-            except Exception as e:
-                print(f"[Freeproxy CDP] 失败: {e}")
-    finally:
-        # Pure CDP 模式中，不要忘了执行 stop 来清理释放后台浏览器进程
-        sb.driver.stop()
+
+            print(
+                f"[Worker {thread_id}] 任务成功: {url} (用时: {time.time() - task_start_time:.1f}s)"
+            )
+
+        except Exception as e:
+            # 如果是超时触发的，这里通常会捕获到 ConnectionClosed 或类似的驱动关闭异常
+            duration = time.time() - task_start_time
+            if duration >= 9.9:
+                print(f"[Worker {thread_id}] !! 任务强制超时 (10s) 自动终止: {url}")
+            else:
+                print(f"[Worker {thread_id}] 抓取失败 {url}: {e}")
+
+            # 超时或异常后，浏览器可能已经关闭或状态异常，标记为 None 下次循环重新初始化
+            sb = None
+
+        finally:
+            timer.cancel()  # 任务结束（无论成功失败）务必取消计时器
+            url_queue.task_done()
+
+    # 退出线程前清理资源
+    if sb:
+        try:
+            sb.driver.stop()
+        except:
+            pass
+
+
+def _fetch_htmls(urls):
+    """
+    并发抓取调度器
+    """
+    if not urls:
+        return set()
+
+    url_queue = queue.Queue()
+    for url in urls:
+        url_queue.put(url)
+
+    results = set()
+
+    # 建议：如果 10s 超时很硬，并发数不宜过高，避免系统由于启动多个 Chrome 瞬间卡死
+    max_workers = 4  # 你要求的4个
+    print(f"\n[调度中心] 启动 {max_workers} 个并发 worker，监控 10s 超时...")
+
+    threads = []
+    for i in range(max_workers):
+        t = threading.Thread(target=_worker_process, args=(url_queue, results))
+        t.daemon = True  # 设置为守护线程，主程序退出时自动销毁
+        t.start()
+        threads.append(t)
+
+    # 等待队列中的所有任务完成
+    url_queue.join()
+
+    # 也可以选择 join 线程
+    for t in threads:
+        # 这里不需要 join，因为 queue.join() 已经保证任务做完了
+        pass
+
+    print(f"\n[调度中心] 所有任务处理完毕。")
     return results
-    # return [result.all for result in results]
 
 
 def fetch_freeproxy_world(configs):

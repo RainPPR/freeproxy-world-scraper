@@ -54,6 +54,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: scraper
     steps:
+      - run: |
+          sudo tee -a /etc/hosts <<EOF
+          0.0.0.0 fonts.googleapis.com
+          0.0.0.0 pagead2.googlesyndication.com
+          0.0.0.0 www.googletagmanager.com
+          0.0.0.0 googletagmanager.com
+          0.0.0.0 static.cloudflareinsights.com
+          0.0.0.0 cloudflareinsights.com
+          0.0.0.0 googleapis.com
+          0.0.0.0 googlesyndication.com
+          EOF
       - name: Checkout Repository
         uses: actions/checkout@v6
 

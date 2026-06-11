@@ -23,7 +23,7 @@ def main():
             print(f"[{name}] 执行时发生错误: {e}, 已跳过继续下一个。")
 
     # 保存先フォルダ（data）が存在しない場合は自動作成する
-    os.makedirs('../data', exist_ok=True)
+    os.makedirs("../data", exist_ok=True)
 
     output = [result.all for result in all_results]
     with open("../data/raw.json", "w", encoding="utf-8") as f:
