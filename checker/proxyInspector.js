@@ -9,8 +9,9 @@ delete process.env.HTTPS_PROXY;
 delete process.env.http_proxy;
 delete process.env.https_proxy;
 
-// 全局本机IP，在模块加载时获取
+// 全局本机IP，延迟初始化
 let localIp = null;
+let localIpInitPromise = null;
 
 /**
  * 获取本机IP（不用代理）
@@ -18,50 +19,49 @@ let localIp = null;
  * 都失败则 exit(1)
  */
 async function initLocalIp() {
-    const plainAxios = axios.create({
-        timeout: 10000,
-        headers: {
-            "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
-        },
-    });
+    if (localIp) return localIp;
+    if (localIpInitPromise) return localIpInitPromise;
 
-    // 第一次尝试：api.ipapi.is
-    try {
-        const res = await plainAxios.get("https://api.ipapi.is/");
-        if (res.data && res.data.ip) {
-            localIp = res.data.ip;
-            // console.log(`[INIT] 本机IP获取成功: ${localIp} (via api.ipapi.is)`);
-            return;
-        }
-    } catch (error) {
-        // console.warn(`[INIT] api.ipapi.is 获取失败: ${error.message}`);
-    }
-
-    // 第二次尝试：api-ipv4.ip.sb/ip（返回纯文本IP）
-    try {
-        const res = await plainAxios.get("https://api-ipv4.ip.sb/ip", {
-            responseType: "text",
+    localIpInitPromise = (async () => {
+        const plainAxios = axios.create({
+            timeout: 10000,
+            headers: {
+                "User-Agent":
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+            },
         });
-        const ip = res.data.trim();
-        if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
-            localIp = ip;
-            // console.log(
-            //     `[INIT] 本机IP获取成功: ${localIp} (via api-ipv4.ip.sb/ip)`,
-            // );
-            return;
+
+        // 第一次尝试：api.ipapi.is
+        try {
+            const res = await plainAxios.get("https://api.ipapi.is/");
+            if (res.data && res.data.ip) {
+                localIp = res.data.ip;
+                return localIp;
+            }
+        } catch (error) {
+            // 静默失败
         }
-    } catch (error) {
-        // console.warn(`[INIT] api-ipv4.ip.sb/ip 获取失败: ${error.message}`);
-    }
 
-    // 都失败，退出
-    // console.error("[INIT] 无法获取本机IP，程序退出");
-    process.exit(1);
+        // 第二次尝试：api-ipv4.ip.sb/ip（返回纯文本IP）
+        try {
+            const res = await plainAxios.get("https://api-ipv4.ip.sb/ip", {
+                responseType: "text",
+            });
+            const ip = res.data.trim();
+            if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
+                localIp = ip;
+                return localIp;
+            }
+        } catch (error) {
+            // 静默失败
+        }
+
+        // 都失败，退出
+        process.exit(1);
+    })();
+
+    return localIpInitPromise;
 }
-
-// 立即执行初始化
-await initLocalIp();
 
 async function getWithRetry(
     client,
@@ -128,6 +128,9 @@ function convertGeoipToLocationFormat(geoipData) {
 }
 
 export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
+    // 确保本机IP已初始化
+    await initLocalIp();
+
     let httpAgent;
     let httpsAgent;
 
