@@ -28,7 +28,7 @@ jobs:
         run: |
           uv sync --locked --no-dev
           sudo apt-get update
-          sudo apt-get install -y xvfb libgbm-dev libxkbcommon0 libasound2 libgtk-3-0
+          sudo apt-get install -y xvfb libgbm-dev libxkbcommon0 libasound2t64 libgtk-3-0t64 libgbm1 fonts-noto-cjk
           # sudo apt-get install -y google-chrome-stable
           uv run seleniumbase install chromedriver chs
           # 给所有驱动添加执行权限
@@ -39,7 +39,8 @@ jobs:
 
       - name: Run Update Script
         working-directory: ./scraper
-        run: xvfb-run --server-args="-screen 0 1280x1024x24" uv run scraper\main.py
+        run: uv run scraper\main.py
+        # run: xvfb-run --server-args="-screen 0 1280x1024x24" uv run scraper\main.py
         timeout-minutes: 120
 
       - name: Commit Changes
