@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const CONCURRENCY = 10000;
-const TIMEOUT_MS = 50000;
+const TIMEOUT_MS = 30000;
 const RAMP_UP_DURATION_MS = 20000;
 const RAMP_UP_RATE = 500;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
@@ -205,7 +205,7 @@ async function main() {
                 if (exitIpInfo.is_abuser) icons += IP_FLAG_ICONS.is_abuser;
             }
 
-            if (str && str.trim() !== '') {
+            if (icons && icons.trim() !== '') {
                 icons = `【${icons}】`;
             }
 

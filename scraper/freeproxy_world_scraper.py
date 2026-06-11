@@ -233,7 +233,12 @@ class ProxyNode:
 
     def __repr__(self):
         # return json.dumps(self.all, ensure_ascii=False)
-        return f"{self.type}://{self.ip}:{self.port}"
+        name = urllib.parse.quote(
+            f"{self.all['country_code']} {self.type}" +
+            f" ({self.all['city']}, {self.all['country']}) " +
+            f"{self.ip}:{self.port}"
+        )
+        return f"{self.type}://{self.ip}:{self.port}#{name}"
 
 
 BLOCKED_URLS = [
