@@ -20,7 +20,7 @@ def main():
             all_results.update(results)
             print(f"[{name}] 抓取成功")
         except Exception as e:
-        print(f"[{name}] 执行时发生错误: {e}, 已跳过继续下一个。")
+            print(f"[{name}] 执行时发生错误: {e}, 已跳过继续下一个。")
 
     output = [result.all for result in all_results]
     with open("../data/raw.json", "w", encoding="utf-8") as f:
