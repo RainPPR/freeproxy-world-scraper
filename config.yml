@@ -28,6 +28,9 @@ freeproxy_list:
   - SG:
       country: SG
       speed: 10000
+  - MY:
+      country: MY
+      speed: 10000
   - TW:
       country: TW
       speed: 10000
@@ -38,9 +41,6 @@ freeproxy_list:
       country: VN
       speed: 10000
 # For good regions
-  - US:
-      country: US
-      speed: 7500
   - RO:
       country: RO
       speed: 7500
