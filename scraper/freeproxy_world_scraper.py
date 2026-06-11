@@ -429,7 +429,7 @@ def _fetch_htmls(urls):
     results = set()
 
     # 建议：如果 10s 超时很硬，并发数不宜过高，避免系统由于启动多个 Chrome 瞬间卡死
-    max_workers = 16
+    max_workers = 8
     print(f"\n[调度中心] 启动 {max_workers} 个并发 worker，监控 10s 超时...")
 
     threads = []
