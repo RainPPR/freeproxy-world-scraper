@@ -25,14 +25,17 @@ jobs:
 
       - name: Install uv dependencies
         working-directory: ./scraper
-        run: uv sync --locked --no-dev
-          # sudo apt-get update
-          # uv run seleniumbase install chromedriver
-          # 给所有驱动添加执行权限
-          # find .venv -name "uc_driver" -o -name "chromedriver" -o -name "*driver" -type f 2>/dev/null | while read -r driver; do
-          #   chmod +x "$driver"
-          #   echo "Fixed permissions for: $driver"
-          # done
+        run: |
+          uv sync --locked --no-dev
+          chmod -R 777 .venv
+        
+        # sudo apt-get update
+        # uv run seleniumbase install chromedriver
+        # 给所有驱动添加执行权限
+        # find .venv -name "uc_driver" -o -name "chromedriver" -o -name "*driver" -type f 2>/dev/null | while read -r driver; do
+        #   chmod +x "$driver"
+        #   echo "Fixed permissions for: $driver"
+        # done
 
       - name: Run Update Script
         working-directory: ./scraper
