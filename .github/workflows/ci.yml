@@ -23,8 +23,6 @@ jobs:
     steps:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
-      - name: Start Workflow Telemetry
-        uses: dev-hato/actions-workflow-metrics@v1
         
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -81,8 +79,6 @@ jobs:
     steps:
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
-      - name: Start Workflow Telemetry
-        uses: dev-hato/actions-workflow-metrics@v1
       
       - name: Checkout Repository
         uses: actions/checkout@v6
