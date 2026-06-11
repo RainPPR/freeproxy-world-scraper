@@ -31,11 +31,11 @@ async function initLocalIp() {
         const res = await plainAxios.get("https://api.ipapi.is/");
         if (res.data && res.data.ip) {
             localIp = res.data.ip;
-            console.log(`[INIT] 本机IP获取成功: ${localIp} (via api.ipapi.is)`);
+            // console.log(`[INIT] 本机IP获取成功: ${localIp} (via api.ipapi.is)`);
             return;
         }
     } catch (error) {
-        console.warn(`[INIT] api.ipapi.is 获取失败: ${error.message}`);
+        // console.warn(`[INIT] api.ipapi.is 获取失败: ${error.message}`);
     }
 
     // 第二次尝试：api-ipv4.ip.sb/ip（返回纯文本IP）
@@ -46,17 +46,17 @@ async function initLocalIp() {
         const ip = res.data.trim();
         if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
             localIp = ip;
-            console.log(
-                `[INIT] 本机IP获取成功: ${localIp} (via api-ipv4.ip.sb/ip)`,
-            );
+            // console.log(
+            //     `[INIT] 本机IP获取成功: ${localIp} (via api-ipv4.ip.sb/ip)`,
+            // );
             return;
         }
     } catch (error) {
-        console.warn(`[INIT] api-ipv4.ip.sb/ip 获取失败: ${error.message}`);
+        // console.warn(`[INIT] api-ipv4.ip.sb/ip 获取失败: ${error.message}`);
     }
 
     // 都失败，退出
-    console.error("[INIT] 无法获取本机IP，程序退出");
+    // console.error("[INIT] 无法获取本机IP，程序退出");
     process.exit(1);
 }
 
@@ -209,9 +209,9 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
 
                 // 检查是否与本机IP相同（代理未生效）
                 if (exitIp && exitIp === localIp) {
-                    console.warn(
-                        `[WARN] 代理 ${proxyUrl} 返回IP与本机IP相同 (${exitIp})，重试中... (attempt ${attemptCount + 1})`,
-                    );
+                    // console.warn(
+                    //     `[WARN] 代理 ${proxyUrl} 返回IP与本机IP相同 (${exitIp})，重试中... (attempt ${attemptCount + 1})`,
+                    // );
                     attemptCount++;
                     if (attemptCount < maxAttempts) {
                         await new Promise((resolve) =>
@@ -239,9 +239,9 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
 
         // 如果 api.ipapi.is 返回的都是本机IP或失败了，使用备份API
         if (!ipRes) {
-            console.log(
-                `[INFO] 切换到备份API api-ipv4.ip.sb/geoip for ${proxyUrl}`,
-            );
+            // console.log(
+            //     `[INFO] 切换到备份API api-ipv4.ip.sb/geoip for ${proxyUrl}`,
+            // );
             let backupRes = null;
             let backupAttempts = 0;
             const maxBackupAttempts = 2;
@@ -257,25 +257,25 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
                     );
                     if (converted) {
                         report.exitIpInfo = converted;
-                        console.log(`[INFO] 备份API获取成功 for ${proxyUrl}`);
+                        // console.log(`[INFO] 备份API获取成功 for ${proxyUrl}`);
                         break;
                     } else {
                         throw new Error("备份API返回数据格式无效");
                     }
                 } catch (error) {
                     backupAttempts++;
-                    console.warn(
-                        `[WARN] 备份API尝试 ${backupAttempts} 失败: ${error.message}`,
-                    );
+                    // console.warn(
+                    //     `[WARN] 备份API尝试 ${backupAttempts} 失败: ${error.message}`,
+                    // );
                     if (backupAttempts < maxBackupAttempts) {
                         await new Promise((resolve) =>
                             setTimeout(resolve, 2000),
                         );
                     } else {
                         report.exitIpInfo = null;
-                        console.error(
-                            `[ERROR] 备份API也失败了 for ${proxyUrl}`,
-                        );
+                        // console.error(
+                        //     `[ERROR] 备份API也失败了 for ${proxyUrl}`,
+                        // );
                     }
                 }
             }
@@ -285,9 +285,9 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
         }
     } catch (error) {
         report.exitIpInfo = null;
-        console.error(
-            `[ERROR] 获取出口IP信息失败 for ${proxyUrl}: ${error.message}`,
-        );
+        // console.error(
+        //     `[ERROR] 获取出口IP信息失败 for ${proxyUrl}: ${error.message}`,
+        // );
     }
 
     report.passAll = true;
