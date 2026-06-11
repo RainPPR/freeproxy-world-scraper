@@ -12,9 +12,9 @@ def main():
     configs = config_data["freeproxy_list"]
     all_results = set()
 
-    for config in configs:
-        print(f"正在抓取配置: {config}")
-        results = fetch_freeproxy_work_pagerandom(config, 200)
+    for key, value in configs.items():
+        print(f"正在抓取配置: {key}")
+        results = fetch_freeproxy_work_pagerandom(value, 200)
         all_results.update(results)
 
     output = [result.all for result in all_results]

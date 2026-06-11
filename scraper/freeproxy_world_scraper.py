@@ -341,6 +341,7 @@ def fetch_freeproxy_world(configs):
 def fetch_freeproxy_work_pagelist(config, pagelist):
     urls = []
     args = urllib.parse.urlencode(config)
+    pagelist.sort()
     for page in pagelist:
         urls.append(f"https://www.freeproxy.world/?{args}&page={page}")
     return _fetch_htmls(urls)
@@ -359,9 +360,7 @@ def fetch_freeproxy_work_pagerandom(config, pagemax):
     valid_pagemax = _fetch_pagemax(
         f"https://www.freeproxy.world/?{urllib.parse.urlencode(config)}"
     )
-    pagelist = sorted(
-        random.sample(range(1, valid_pagemax + 1), min(valid_pagemax, pagemax))
-    )
+    pagelist = random.sample(range(1, valid_pagemax + 1), min(valid_pagemax, pagemax))
     return fetch_freeproxy_work_pagelist(config, pagelist)
 
 
