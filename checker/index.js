@@ -157,7 +157,7 @@ async function main() {
 
     // 写入 JSON 输出文件（所有节点）
     try {
-        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(allResultsOutput, null, 2), 'utf-8');
+        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(allResultsOutput, null, 1), 'utf-8');
         console.log(`\nJSON 结果已保存到: ${OUTPUT_JSON_PATH}`);
         console.log(`总代理数: ${allResultsOutput.length}`);
     } catch (error) {
