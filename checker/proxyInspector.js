@@ -9,7 +9,7 @@ delete process.env.HTTPS_PROXY;
 delete process.env.http_proxy;
 delete process.env.https_proxy;
 
-async function getWithRetry(client, url, options = {}, maxRetries = 2, retryDelayMs = 5000) {
+async function getWithRetry(client, url, options = {}, maxRetries = 1, retryDelayMs = 5000) {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {

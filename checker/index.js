@@ -2,10 +2,10 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 6000;
+const CONCURRENCY = 8000;
 const TIMEOUT_MS = 10000;
-const RAMP_UP_DURATION_MS = 20000;
-const RAMP_UP_RATE = 300;
+const RAMP_UP_DURATION_MS = 40000;
+const RAMP_UP_RATE = 200;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
@@ -157,7 +157,7 @@ async function main() {
 
     // 写入 JSON 输出文件（所有节点）
     try {
-        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(allResultsOutput, null, 1), 'utf-8');
+        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(allResultsOutput, null, 4), 'utf-8');
         console.log(`\nJSON 结果已保存到: ${OUTPUT_JSON_PATH}`);
         console.log(`总代理数: ${allResultsOutput.length}`);
     } catch (error) {
