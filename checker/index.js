@@ -2,10 +2,10 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 8000;
-const TIMEOUT_MS = 10000;
-const RAMP_UP_DURATION_MS = 40000;
-const RAMP_UP_RATE = 200;
+const CONCURRENCY = 10000;
+const TIMEOUT_MS = 50000;
+const RAMP_UP_DURATION_MS = 20000;
+const RAMP_UP_RATE = 500;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
@@ -182,7 +182,7 @@ async function main() {
             const country = location.country || proxyData.country || '';
             const state = location.state || '';  // state 如果不存在则留空
             const city = location.city || proxyData.city || '';
-            const exitIp = exitIpInfo.ip || '';
+            const exitIp = exitIpInfo.ip || proxyData.ip || '';
 
             // 构建位置字符串: country state city（空格分隔，state 可能为空）
             const locationParts = [country, state, city].filter(p => p);
@@ -205,7 +205,11 @@ async function main() {
                 if (exitIpInfo.is_abuser) icons += IP_FLAG_ICONS.is_abuser;
             }
 
-            return `${type}://${ip}:${port}#${urlencodedPart}【${icons}】`;
+            if (str && str.trim() !== '') {
+                icons = `【${icons}】`;
+            }
+
+            return `${type}://${ip}:${port}#${urlencodedPart}${icons}`;
         }).join('\n');
 
         writeFileSync(OUTPUT_TXT_PATH, txtContent, 'utf-8');
