@@ -75,7 +75,7 @@ jobs:
 
       - name: Build Bun Executable
         working-directory: ./checker
-        run: bun build --compile --minify --sourcemap --bytecode index.ts --outfile ../index-bin
+        run: bun build --compile --minify --sourcemap --bytecode index.js --outfile ../index-bin
       
       - name: Bun Post-processing
         run: ./index-bin
