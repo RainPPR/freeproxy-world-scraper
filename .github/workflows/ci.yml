@@ -21,6 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip_scraper == 'true') }}
     steps:
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
+      - name: Start Workflow Telemetry
+        uses: dev-hato/actions-workflow-metrics@v1
+        
       - name: Checkout Repository
         uses: actions/checkout@v6
 
@@ -65,7 +70,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update configs [skip ci]"
+            git commit -m "Update configs $(date '+%Y-%m-%d %H:%M:%S') [skip ci]"
             git push origin main
           fi
 
@@ -74,6 +79,11 @@ jobs:
     needs: scraper
     if: ${{ always() && (needs.scraper.result == 'success' || needs.scraper.result == 'skipped') }}
     steps:
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
+      - name: Start Workflow Telemetry
+        uses: dev-hato/actions-workflow-metrics@v1
+      
       - name: Checkout Repository
         uses: actions/checkout@v6
 
@@ -99,6 +109,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update configs [skip ci]"
+            git commit -m "Update configs $(date '+%Y-%m-%d %H:%M:%S') [skip ci]"
             git push origin main
           fi

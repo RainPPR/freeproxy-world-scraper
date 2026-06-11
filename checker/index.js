@@ -2,11 +2,24 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 128;
-const TIMEOUT_MS = 5000;
+const CONCURRENCY = 256;
+const TIMEOUT_MS = 30000;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
+
+// IP 信息标志位对应的图标（为 true 时显示）
+const IP_FLAG_ICONS = {
+    is_bogon: '🚫',      // 无效地址
+    is_mobile: '📱',     // 移动网络
+    is_satellite: '🛰️',  // 卫星
+    is_crawler: '🕷️',    // 爬虫
+    is_datacenter: '🏢', // 数据中心
+    is_tor: '🧅',        // Tor
+    is_proxy: '🎭',      // 代理
+    is_vpn: '🔒',        // VPN
+    is_abuser: '⚠️'      // 滥用者
+};
 
 // 读取原始代理数据
 function loadProxies() {
@@ -98,8 +111,8 @@ async function main() {
     console.log(`\n检测完成，耗时 ${duration.toFixed(2)} 秒`);
     console.log(`通过检测: ${passedProxies.length}/${results.length}`);
 
-    // 构建输出格式
-    const output = passedProxies.map(({ proxyData, report }) => ({
+    // 构建所有结果的 JSON 输出（包含通过和未通过的）
+    const allResultsOutput = results.map(({ proxyData, report }) => ({
         // 原始字段
         ...proxyData,
         // check 字段（包含 alive, latency, tlsSecure）
@@ -112,21 +125,62 @@ async function main() {
         exit_ip_info: report.exitIpInfo
     }));
 
-    // 写入 JSON 输出文件
+    // 写入 JSON 输出文件（所有节点）
     try {
-        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(output, null, 2), 'utf-8');
+        writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(allResultsOutput, null, 2), 'utf-8');
         console.log(`\nJSON 结果已保存到: ${OUTPUT_JSON_PATH}`);
-        console.log(`有效代理数: ${output.length}`);
+        console.log(`总代理数: ${allResultsOutput.length}`);
     } catch (error) {
         console.error('写入 JSON 结果失败:', error.message);
         process.exit(1);
     }
 
-    // 写入 TXT 输出文件（每行一个 JSON 对象，与 raw.txt 格式一致）
+    // 构建通过的代理的 TXT 输出
+    // 格式: type://ip:port#(urlencoded)exit_ip_info.location.country_code (country state city) ip【图标】
     try {
-        const txtContent = output.map(item => JSON.stringify(item)).join('\n');
+        const txtContent = passedProxies.map(({ proxyData, report }) => {
+            const type = proxyData.type;
+            const ip = proxyData.ip;
+            const port = proxyData.port;
+
+            // 获取 exit_ip_info 或 fallback 到 proxyData
+            const exitIpInfo = report.exitIpInfo || {};
+            const location = exitIpInfo.location || {};
+
+            // 获取位置信息（优先使用 exit_ip_info，如果没有则 fallback 到 proxyData）
+            const countryCode = location.country_code || proxyData.country_code || '';
+            const country = location.country || proxyData.country || '';
+            const state = location.state || '';  // state 如果不存在则留空
+            const city = location.city || proxyData.city || '';
+            const exitIp = exitIpInfo.ip || '';
+
+            // 构建位置字符串: country state city（空格分隔，state 可能为空）
+            const locationParts = [country, state, city].filter(p => p);
+            const locationStr = locationParts.join(' ');
+
+            // 构建需要 URL 编码的部分
+            const urlencodedPart = encodeURIComponent(`${countryCode} (${locationStr}) ${exitIp}`);
+
+            // 构建图标字符串（只显示为 true 的标志）
+            let icons = '';
+            if (exitIpInfo) {
+                if (exitIpInfo.is_bogon) icons += IP_FLAG_ICONS.is_bogon;
+                if (exitIpInfo.is_mobile) icons += IP_FLAG_ICONS.is_mobile;
+                if (exitIpInfo.is_satellite) icons += IP_FLAG_ICONS.is_satellite;
+                if (exitIpInfo.is_crawler) icons += IP_FLAG_ICONS.is_crawler;
+                if (exitIpInfo.is_datacenter) icons += IP_FLAG_ICONS.is_datacenter;
+                if (exitIpInfo.is_tor) icons += IP_FLAG_ICONS.is_tor;
+                if (exitIpInfo.is_proxy) icons += IP_FLAG_ICONS.is_proxy;
+                if (exitIpInfo.is_vpn) icons += IP_FLAG_ICONS.is_vpn;
+                if (exitIpInfo.is_abuser) icons += IP_FLAG_ICONS.is_abuser;
+            }
+
+            return `${type}://${ip}:${port}#${urlencodedPart}【${icons}】`;
+        }).join('\n');
+
         writeFileSync(OUTPUT_TXT_PATH, txtContent, 'utf-8');
         console.log(`TXT 结果已保存到: ${OUTPUT_TXT_PATH}`);
+        console.log(`TXT 有效代理数: ${passedProxies.length}`);
     } catch (error) {
         console.error('写入 TXT 结果失败:', error.message);
         process.exit(1);
