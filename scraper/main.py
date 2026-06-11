@@ -14,7 +14,7 @@ def main():
 
     for config in configs:
         print(f"正在抓取配置: {config}")
-        results = fetch_freeproxy_world_pagerandom(config, 200)
+        results = fetch_freeproxy_work_pagerandom(config, 200)
         all_results.update(results)
 
     output = [result.all for result in all_results]
