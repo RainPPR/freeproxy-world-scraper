@@ -83,7 +83,7 @@ jobs:
       
       - name: Checkout Repository
         uses: actions/checkout@v6
-        run: |
+      - run: |
           git fetch --all
           git reset --hard origin/${{ github.ref_name }}
 
