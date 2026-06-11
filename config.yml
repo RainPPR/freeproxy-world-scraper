@@ -32,7 +32,7 @@ freeproxy_list:
       country: TW
       speed: 10000
   - BD:
-      country: TW
+      country: BD
       speed: 10000
   - VN:
       country: VN
@@ -53,8 +53,8 @@ freeproxy_list:
   - FR:
       country: FR
       speed: 7500
-  - FL:
-      country: FL
+  - FI:
+      country: FI
       speed: 7500
   - AU:
       country: AU

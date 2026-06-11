@@ -12,10 +12,15 @@ def main():
     configs = config_data["freeproxy_list"]
     all_results = set()
 
-    for key, value in configs.items():
-        print(f"正在抓取配置: {key}")
-        results = fetch_freeproxy_work_pagerandom(value, 200)
-        all_results.update(results)
+    for item in configs:
+        name, config = next(iter(item.items()))
+        print(f"[{name}] 正在抓取配置：{config}")
+        try:
+            results = fetch_freeproxy_work_pagerandom(config, 200)
+            all_results.update(results)
+            print(f"[{name}] 抓取成功")
+        except Exception as e:
+        print(f"[{name}] 执行时发生错误: {e}, 已跳过继续下一个。")
 
     output = [result.all for result in all_results]
     with open("../data/raw.json", "w", encoding="utf-8") as f:
