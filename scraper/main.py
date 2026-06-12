@@ -27,26 +27,26 @@ def verify_proxy(proxy_str):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
 
-    # 第一步：检测百度 (必须在 10s 内返回 200)
+    # 第一步：检测百度 (必须在 20s 内返回 200)
     try:
         r_baidu = requests.get(
             "https://www.baidu.com/favicon.ico",
             proxies=proxies,
             headers=headers,
-            timeout=10,
+            timeout=20,
         )
         if r_baidu.status_code != 200:
             return None  # 状态码不对，剔除
     except requests.RequestException:
         return None  # 访问百度超时或连接失败，剔除
 
-    # 第二步：检测 YouTube (必须在 10s 内无响应，或状态码不在 [200, 399] 之间)
+    # 第二步：检测 YouTube (必须在 20s 内无响应，或状态码不在 [200, 399] 之间)
     try:
         r_youtube = requests.get(
             "https://www.youtube.com/favicon.ico",
             proxies=proxies,
             headers=headers,
-            timeout=10,
+            timeout=20,
         )
 
         # 如果有响应，且状态码在 200 到 399 之间，说明成功访问了 YouTube，说明不是纯正的境内节点
@@ -180,6 +180,12 @@ def fetch_geonode():
 
 def get_cn():
     config = {"country": "CN"}
+    
+    cn_exist = []
+    if os.path.exists('../data/cn_checked.txt'):
+        with open('../data/cn_checked.txt', 'r', encoding='utf-8') as file:
+            # 读取所有行并去除每行末尾的换行符
+            cn_exist = [line.strip() for line in file.readlines()]
 
     print("正在抓取 ProxyScrape China 节点")
     proxyscrape_nodes = fetch_proxyscrape()
@@ -189,9 +195,9 @@ def get_cn():
     freeproxy_nodes_raw = fetch_freeproxy_work_pagemax(config, 50)
     freeproxy_nodes = [f"{i.type}://{i.ip}:{i.port}" for i in freeproxy_nodes_raw]
 
-    cn_results = list(set(proxyscrape_nodes + geonode_nodes + freeproxy_nodes))
+    cn_results = list(set(cn_exist + proxyscrape_nodes + geonode_nodes + freeproxy_nodes))
 
-    print(f"抓取到 {len(cn_proxy)} 个中国节点")
+    print(f"抓取到 {len(cn_results)} 个中国节点")
     with open("../data/cn_raw.txt", "w", encoding="utf-8") as f:
         for result in cn_results:
             f.write(result + "\n")
