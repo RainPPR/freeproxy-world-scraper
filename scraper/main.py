@@ -33,7 +33,7 @@ def verify_proxy(proxy_str):
             "https://www.baidu.com/favicon.ico",
             proxies=proxies,
             headers=headers,
-            timeout=20,
+            timeout=10,
         )
         if r_baidu.status_code != 200:
             return None  # 状态码不对，剔除
@@ -46,7 +46,7 @@ def verify_proxy(proxy_str):
             "https://www.youtube.com/favicon.ico",
             proxies=proxies,
             headers=headers,
-            timeout=20,
+            timeout=10,
         )
 
         # 如果有响应，且状态码在 200 到 399 之间，说明成功访问了 YouTube，说明不是纯正的境内节点
