@@ -95,7 +95,7 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
     try {
         const start = Date.now();
         await getWithRetry(client, "https://www.openssh.org/favicon.ico", {
-            validateStatus: (status) => status === 204,
+            validateStatus: (status) => status === 200,
         });
         report.latencyOpenssh = Date.now() - start;
         report.tlsSecure = true;
