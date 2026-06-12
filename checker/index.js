@@ -2,10 +2,8 @@ import { inspectProxy } from './proxyInspector';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const CONCURRENCY = 5000;
+const CONCURRENCY = 10000;
 const TIMEOUT_MS = 20000;
-const RAMP_UP_DURATION_MS = 50000;
-const RAMP_UP_RATE = 100;
 const RAW_JSON_PATH = join('.', 'data', 'raw.json');
 const OUTPUT_JSON_PATH = join('.', 'data', 'checked.json');
 const OUTPUT_TXT_PATH = join('.', 'data', 'checked.txt');
@@ -42,49 +40,21 @@ async function checkProxiesWithConcurrency(proxies, concurrency) {
     const queue = [...proxies];
     const total = proxies.length;
     let processed = 0;
-    let activeWorkers = 0;
-    const startTime = Date.now();
-    let rampUpComplete = false;
 
     async function worker() {
         while (queue.length > 0) {
-            // 检查是否需要等待均摊期
-            if (!rampUpComplete) {
-                const elapsed = Date.now() - startTime;
-                const expectedWorkers = Math.min(
-                    concurrency,
-                    Math.floor((elapsed / 1000) * RAMP_UP_RATE)
-                );
-                
-                if (activeWorkers >= expectedWorkers && elapsed < RAMP_UP_DURATION_MS) {
-                    // 等待下一个时间片
-                    await new Promise(r => setTimeout(r, 100));
-                    continue;
-                }
-                
-                if (elapsed >= RAMP_UP_DURATION_MS) {
-                    rampUpComplete = true;
-                    console.log('均摊启动结束')
-                }
-            }
-
             const proxy = queue.shift();
             if (!proxy) break;
-            
-            activeWorkers++;
-            processed++;
-            
-            if (processed % 100 === 0 || processed === total) {
-                console.log(`进度: ${processed}/${total}`);
-            }
-
             try {
                 const result = await checkSingleProxy(proxy);
                 results.push(result);
             } catch (error) {
                 console.error(`检测失败 ${buildProxyUrl(proxy)}:`, error.message);
             } finally {
-                activeWorkers--;
+                processed++;
+                if (processed % 100 === 0 || processed === total) {
+                    console.log(`完成进度: ${processed}/${total}`);
+                }
             }
         }
     }

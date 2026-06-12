@@ -19,7 +19,7 @@ async function getWithRetry(
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            return await client.get(url, options);
+            return await client.get(url, options); 
         } catch (error) {
             lastError = error;
             if (attempt < maxRetries) {
