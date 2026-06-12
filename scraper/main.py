@@ -212,8 +212,6 @@ def get_cn():
 def main():
     get_cn()
 
-    exit(0)
-
     with open("../config.yml", "r", encoding="utf-8") as f:
         config_data = yaml.safe_load(f)
 
