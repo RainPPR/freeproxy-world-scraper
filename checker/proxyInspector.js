@@ -13,8 +13,8 @@ async function getWithRetry(
     client,
     url,
     options = {},
-    maxRetries = 2,
-    retryDelayMs = 5000,
+    maxRetries = 1,
+    retryDelayMs = 10000,
 ) {
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -88,7 +88,7 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
         report.latencyCf = Date.now() - start;
         report.alive = true;
     } catch (error) {
-        report.error = { step: "connectivity", message: error.message };
+        report.error = `connectivity: ${error.message}`;
         return report;
     }
 
@@ -100,7 +100,7 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
         report.latencyOpenssh = Date.now() - start;
         report.tlsSecure = true;
     } catch (error) {
-        report.error = { step: "tls", message: error.message };
+        report.error = `tls: ${error.message}`;
         return report;
     }
 
