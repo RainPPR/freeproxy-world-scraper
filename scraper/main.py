@@ -186,12 +186,12 @@ def get_cn():
     print("正在抓取 GeoNode China 节点")
     geonode_nodes = fetch_geonode()
     print("正在抓取 FreeProxyWorld China 节点")
-    freeproxy_nodes = fetch_freeproxy_work_pagemax(config, 50)
+    freeproxy_nodes_raw = fetch_freeproxy_work_pagemax(config, 50)
+    freeproxy_nodes = [f"{i.type}://{i.ip}:{i.port}" for i in freeproxy_nodes_raw]
 
     cn_results = list(set(proxyscrape_nodes + geonode_nodes + freeproxy_nodes))
 
     print(f"抓取到 {len(cn_proxy)} 个中国节点")
-    cn_results = [f"{i.type}://{i.ip}:{i.port}" for i in cn_proxy]
     with open("../data/cn_raw.txt", "w", encoding="utf-8") as f:
         for result in cn_results:
             f.write(result + "\n")
