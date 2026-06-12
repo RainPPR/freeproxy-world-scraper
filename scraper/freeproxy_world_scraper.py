@@ -234,9 +234,9 @@ class ProxyNode:
     def __repr__(self):
         # return json.dumps(self.all, ensure_ascii=False)
         name = urllib.parse.quote(
-            f"{self.all['country_code']} {self.type.upper()}" +
-            f" ({self.all['city']}, {self.all['country']}) " +
-            f"{self.ip}:{self.port}"
+            f"{self.all['country_code']} {self.type.upper()}"
+            + f" ({self.all['city']}, {self.all['country']}) "
+            + f"{self.ip}:{self.port}"
         )
         return f"{self.type}://{self.ip}:{self.port}#{name}"
 
