@@ -37,12 +37,15 @@ export async function inspectProxy(proxyUrl, timeoutMs = 5000) {
     let httpsAgent;
 
     if (proxyUrl.startsWith("socks")) {
-        const socksAgent = new SocksProxyAgent(
-            proxyUrl.replace(/^socks5:\/\//, "socks5h://"),
-            {
-                keepAlive: false,
-            },
-        );
+        let socksUrl;
+        if (proxyUrl.startsWith("socks5://")) {
+            socksUrl = proxyUrl.replace(/^socks5:\/\//, "socks5h://");
+        } else {
+            socksUrl = proxyUrl.replace(/^socks4:\/\//, "socks4a://");
+        }
+        const socksAgent = new SocksProxyAgent(socksUrl, {
+            keepAlive: false,
+        });
         httpAgent = socksAgent;
         httpsAgent = socksAgent;
     } else {
