@@ -47,9 +47,6 @@ freeproxy_list:
   - DE:
       country: DE
       speed: 7500
-  - GB:
-      country: GB
-      speed: 7500
   - FR:
       country: FR
       speed: 7500
