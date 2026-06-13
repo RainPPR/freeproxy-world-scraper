@@ -3,9 +3,9 @@ import os
 import yaml
 import time
 
-from freeproxy_world_scraper import *
 from fetch_cn import get_cn
 from fetch_other import get_other
+from freeproxy_world_scraper import *
 
 def main():
     get_cn()

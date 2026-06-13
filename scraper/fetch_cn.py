@@ -6,6 +6,7 @@ import time
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from freeproxy_world_scraper import *
 
 def verify_proxy(proxy_str):
     """
